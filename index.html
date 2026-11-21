@@ -912,7 +912,7 @@
             commissionCount === 1 ? "" : "s"
           })</td></tr><tr class="earning-total-row"><td class="earning-amount earning-total-amount">$${combinedTotal.toLocaleString(
             "en-US"
-          )}</td><td>Total earnings</td></tr><tr class="earning-total-row system-count-row"><td class="earning-amount">${systemCount}</td><td>System count</td></tr></tbody></table></div>`;
+          )}</td><td>Total earnings</td></tr><tr class="earning-total-row system-count-row"><td class="earning-amount">${commissionCount}/${systemCount}</td><td>DRs / System Count</td></tr></tbody></table></div>`;
           const earningTable = center.querySelector(".earning-table");
           const earningViewToggle = center.querySelector(
             ".earning-view-toggle"
