@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Earning Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #263244;
+        --muted: #718096;
+        --accent: #4263eb;
+        --owner: #334155;
+        --left: #0f9f8f;
+        --right: #8b5cf6;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Roboto", ui-sans-serif, system-ui, -apple-system,
+          "Segoe UI", sans-serif;
+        color: var(--ink);
+        background: #f5f7fb;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font-family: inherit;
+      }
+      .app {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+      }
+      h1 {
+        font-size: 21px;
+        margin: 0 0 5px;
+        letter-spacing: -0.3px;
+      }
+      .subtitle {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0;
+      }
+      .actions {
+        display: flex;
+        gap: 9px;
+        flex-wrap: wrap;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+        transition: 0.15s ease;
+      }
+      .action {
+        padding: 9px 13px;
+        border-radius: 9px;
+        background: #fff;
+        border: 1px solid #dbe2ec;
+        color: #344054;
+        font-size: 13px;
+      }
+      .action:hover {
+        background: #f0f4fa;
+      }
+      .action.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .help {
+        background: #fff;
+        border: 1px solid #e5eaf1;
+        border-radius: 12px;
+        padding: 11px 14px;
+        color: #667085;
+        font-size: 12px;
+        margin-bottom: 14px;
+        line-height: 1.6;
+      }
+      .help strong {
+        color: #344054;
+      }
+      .legend {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-left: 12px;
+      }
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .canvas {
+        background: #fff;
+        border: 1px solid #e5eaf1;
+        border-radius: 16px;
+        min-height: 420px;
+        height: auto;
+        max-height: none;
+        overflow: visible;
+        position: relative;
+        box-shadow: 0 5px 24px rgba(28, 43, 68, 0.04);
+      }
+      .canvas-inner {
+        position: relative;
+        width: 100%;
+        min-width: 100%;
+        padding: 44px 12px 70px;
+        min-height: 640px;
+      }
+      #connections {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+        pointer-events: none;
+        z-index: 0;
+      }
+      #tree {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: center;
+        width: max-content;
+        min-width: 100%;
+        margin: 0 auto;
+      }
+      .tree-node {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        flex: 0 0 auto;
+        min-width: max-content;
+        width: max-content;
+      }
+      .node-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        position: relative;
+      }
+      .node-label {
+        font-size: 11px;
+        color: #667085;
+        white-space: nowrap;
+        margin-bottom: 5px;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 2px 6px;
+        border-radius: 5px;
+        position: relative;
+        z-index: 2;
+      }
+      .node-label.editable-label {
+        cursor: pointer;
+      }
+      .node-label.editable-label:hover {
+        text-decoration: underline;
+        text-decoration-style: dotted;
+        text-underline-offset: 3px;
+      }
+      .label-editor-overlay {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 2147483000 !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(15, 23, 42, 0.58);
+        backdrop-filter: blur(2px);
+        isolation: isolate;
+      }
+      .label-editor-modal {
+        width: min(360px, 100%);
+        padding: 20px;
+        background: #fff;
+        border: 1px solid #d9e2ee;
+        border-radius: 14px;
+        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.28);
+        color: #263244;
+      }
+      .label-editor-modal h3 {
+        margin: 0 0 7px;
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .label-editor-modal p {
+        margin: 0 0 14px;
+        color: #64748b;
+        font-size: 12px;
+      }
+      .label-editor-modal input {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px 11px;
+        border: 1px solid #767676;
+        border-radius: 4px;
+        background: #fff;
+        color: #222;
+        font: inherit;
+        font-size: 14px;
+        outline: auto;
+      }
+      .label-editor-modal input:focus {
+        background: #fff;
+      }
+      .label-editor-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .label-editor-modal button {
+        padding: 8px 13px;
+        border: 0;
+        border-radius: 7px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .label-editor-modal .cancel-label-edit {
+        background: #eef2f7;
+        color: #475569;
+      }
+      .label-editor-modal .save-label-edit {
+        background: #334155;
+        color: #fff;
+      }
+      .label-editor-modal button:hover {
+        filter: brightness(0.96);
+      }
+      .node-input {
+        width: 44px;
+        min-width: 44px;
+        height: 34px;
+        border: 2px solid var(--node-color);
+        border-radius: 9px;
+        padding: 0 3px;
+        outline: none;
+        background: #fff;
+        color: #263244;
+        font-size: 14px;
+        text-align: center;
+        box-shadow: 0 2px 7px rgba(31, 45, 70, 0.05);
+      }
+      .node-input:focus {
+        box-shadow: 0 0 0 3px
+          color-mix(in srgb, var(--node-color) 18%, transparent);
+      }
+      .add-btn {
+        width: 21px;
+        height: 21px;
+        flex: 0 0 21px;
+        border-radius: 50%;
+        color: #fff;
+        background: var(--button-color);
+        font-size: 16px;
+        line-height: 1;
+        display: grid;
+        place-items: center;
+        padding: 0;
+        box-shadow: 0 2px 5px rgba(31, 45, 70, 0.16);
+      }
+      .add-btn:hover {
+        transform: scale(1.12);
+        filter: brightness(0.94);
+      }
+      .add-btn.has-branch {
+        box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--button-color);
+      }
+      .children {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 28px;
+        padding-top: 58px;
+        position: relative;
+        width: max-content;
+        min-width: max-content;
+      }
+      .children.owner-children {
+        gap: clamp(90px, 14vw, 220px);
+        align-items: flex-start;
+      }
+      .children.owner-children > .child-slot:first-child {
+        justify-content: flex-end;
+      }
+      .children.owner-children > .child-slot:last-child {
+        justify-content: flex-start;
+      }
+      #ownerDashboard {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(245, 247, 251, 0.98);
+        padding: 8px 0 10px;
+        margin: 0 0 10px;
+      }
+      .dashboard-actions {
+        display: flex;
+        justify-content: center;
+        margin: 0 auto 8px;
+        width: min(900px, 100%);
+      }
+      .dashboard-actions .actions {
+        justify-content: center;
+      }
+      #dashboardSummary {
+        width: 100%;
+      }
+      .owner-summary {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: stretch;
+        gap: 10px;
+        width: min(900px, 100%);
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.98);
+        padding: 10px 12px 9px;
+        box-shadow: 0 5px 10px rgba(28, 43, 68, 0.08);
+        border: 1px solid #edf0f5;
+        border-radius: 12px;
+      }
+      .side-stats {
+        background: #f8fafc;
+        border: 1px solid #e5eaf1;
+        border-radius: 9px;
+        padding: 8px 11px;
+        font-size: 11px;
+        line-height: 1.55;
+        min-width: 0;
+      }
+      .side-stats strong {
+        display: block;
+        font-size: 12px;
+        margin-bottom: 3px;
+      }
+      .side-stats.left strong {
+        color: var(--left);
+      }
+      .side-stats.right strong {
+        color: var(--right);
+      }
+      .side-stats span {
+        display: block;
+        color: #667085;
+      }
+      .side-stats b {
+        color: #344054;
+        font-variant-numeric: tabular-nums;
+      }
+      .owner-center {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 270px;
+        text-align: left;
+        font-size: 12px;
+        color: #344054;
+        line-height: 1.4;
+      }
+      .earning-breakdown {
+        width: 100%;
+        max-width: 340px;
+      }
+      .earning-note {
+        font-size: 10px;
+        color: #8a94a6;
+        margin: 0 0 4px 2px;
+      }
+
+      .earning-note-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 10px;
+        margin: 0 2px 5px;
+      }
+      .earning-note-row .earning-note {
+        margin: 0;
+      }
+      .earning-view-toggle {
+        display: inline-block;
+        border: 0;
+        padding: 2px 4px;
+        margin: 0;
+        background: transparent;
+        color: #2563eb;
+        font-family: inherit;
+        font-size: 10px;
+        line-height: 1.4;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .earning-view-toggle:hover {
+        color: #1d4ed8;
+      }
+      .earning-table.minimal-view .toggle-earning-row {
+        display: none;
+      }
+
+      .earning-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border: 1px solid #e3e8ef;
+        border-radius: 7px;
+        overflow: hidden;
+        font-size: 11px;
+      }
+      .earning-table td {
+        padding: 5px 8px;
+        border-bottom: 1px solid #edf0f4;
+      }
+      .earning-table td:first-child {
+        width: 38%;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      .earning-table td:last-child {
+        text-align: left;
+      }
+      .earning-table .default-commission-input {
+        width: 44px;
+        max-width: 44px;
+        min-width: 44px;
+        box-sizing: border-box;
+        margin-left: 5px;
+        border: 1px solid #cbd5e1;
+        border-radius: 5px;
+        padding: 4px 5px;
+        font: inherit;
+        font-weight: 600;
+        color: inherit;
+        background: #fff;
+        text-align: right;
+        outline: none;
+        -moz-appearance: textfield;
+        appearance: textfield;
+      }
+      .earning-table .default-commission-input::-webkit-outer-spin-button,
+      .earning-table .default-commission-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      .default-commission-input:focus {
+        border-color: #64748b;
+        box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.15);
+      }
+      .earning-amount {
+        font-weight: 700;
+        color: #263244;
+      }
+      .earning-table .earning-total-row td {
+        background: #e8f5f1;
+        color: #08765e;
+        font-weight: 800;
+        border-bottom: 0;
+      }
+      .earning-table .earning-total-row .earning-amount {
+        font-size: 13px;
+        color: #08765e;
+      }
+      .earning-table .system-count-row td {
+        background: #eef2ff;
+        color: #4338ca;
+        font-weight: 800;
+        border-bottom: 0;
+        border-top: 2px solid #c7d2fe;
+      }
+      .earning-table .system-count-row .earning-amount {
+        font-size: 13px;
+        color: #4338ca;
+      }
+      @media (max-width: 600px) {
+        .owner-summary {
+          width: 100%;
+          gap: 5px;
+        }
+        .side-stats {
+          padding: 7px 6px;
+          font-size: 10px;
+        }
+        .owner-center {
+          min-width: 76px;
+          font-size: 10px;
+        }
+        .canvas-inner {
+          padding-left: 6px;
+          padding-right: 6px;
+        }
+      }
+      .child-slot {
+        display: flex;
+        align-items: flex-start;
+        flex: 0 0 auto;
+        min-width: max-content;
+        width: max-content;
+        position: relative;
+      }
+      .child-slot.draggable {
+        touch-action: none;
+        cursor: grab;
+      }
+      .child-slot.draggable.dragging {
+        cursor: grabbing;
+      }
+      .owner-node-highlight {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px solid transparent;
+      }
+      .owner-node-highlight-left {
+        background: rgba(15, 159, 143, 0.075);
+        border-color: rgba(15, 159, 143, 0.22);
+      }
+      .owner-node-highlight-right {
+        background: rgba(139, 92, 246, 0.075);
+        border-color: rgba(139, 92, 246, 0.22);
+      }
+      /* Labels inside the highlighted Owner slots blend into the side-coloured panel. */
+      .owner-node-highlight .node-label {
+        background: transparent;
+        padding: 0 4px;
+        margin-bottom: 0;
+        font-weight: 600;
+        z-index: auto;
+      }
+      .owner-node-highlight-left .node-label {
+        color: #087f72;
+      }
+      .owner-node-highlight-right .node-label {
+        color: #7041c5;
+      }
+      .child-slot.dragging {
+        cursor: grabbing;
+        z-index: 5;
+        filter: drop-shadow(0 5px 8px rgba(31, 45, 70, 0.12));
+      }
+      .empty-note {
+        position: absolute;
+        top: 128px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #a0aaba;
+        font-size: 12px;
+        white-space: nowrap;
+        pointer-events: none;
+      }
+      @media (max-width: 600px) {
+        .app {
+          padding: 10px;
+        }
+        .canvas {
+          min-height: 360px;
+        }
+        .canvas-inner {
+          padding: 20px 6px 55px;
+        }
+      }
+
+      /* Owner label: a strong full-label treatment that stands above both branch colours. */
+      .tree-node.owner-root > .node-label {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-width: 92px !important;
+        min-height: 38px !important;
+        padding: 8px 18px !important;
+        margin-bottom: 5px !important;
+        border-radius: 9px !important;
+        color: #ffffff !important;
+        background: linear-gradient(135deg, #d97706, #b45309) !important;
+        border: 1px solid #f59e0b !important;
+        box-shadow: 0 5px 14px rgba(180, 83, 9, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+        font-size: 14px !important;
+        font-weight: 800 !important;
+        line-height: 1.2 !important;
+        white-space: nowrap !important;
+      }
+      .tree-node.owner-root > .node-label:hover {
+        text-decoration: none !important;
+        filter: brightness(1.08);
+      }
+
+      .help {
+        padding: 0;
+        overflow: hidden;
+      }
+      .help > summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 14px;
+        cursor: pointer;
+        list-style: none;
+        color: #344054;
+        font-weight: 600;
+      }
+      .help > summary::-webkit-details-marker {
+        display: none;
+      }
+      .help > summary::after {
+        content: "+";
+        font-size: 17px;
+        line-height: 1;
+        color: #718096;
+        font-weight: 500;
+      }
+      .help[open] > summary::after {
+        content: "−";
+      }
+      .branch-rules-hint {
+        margin-left: auto;
+        color: #98a2b3;
+        font-size: 11px;
+        font-weight: 400;
+      }
+      .help-content {
+        padding: 0 14px 12px;
+        color: #667085;
+        line-height: 1.6;
+      }
+
+      .app-footer {
+        margin: 18px 0 4px;
+        padding: 15px 10px 8px;
+        text-align: center;
+        color: #7b8798;
+        font-size: 12px;
+        line-height: 1.7;
+      }
+      .app-footer .copyright {
+        font-weight: 600;
+        color: #526074;
+      }
+      .app-footer .made-with {
+        color: #7b8798;
+      }
+      .app-footer .heart {
+        color: #e11d48;
+        font-size: 15px;
+        vertical-align: -1px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <div>
+          <h1>My Earning Calculator</h1>
+          <p class="subtitle">
+            Track left/right points, matching, carry-forward and cheque earnings
+            as your branches grow.
+          </p>
+        </div>
+      </header>
+      <details class="help" id="branchRules">
+        <summary>
+          <strong>Branch rules</strong
+          ><span class="branch-rules-hint">Show rules</span>
+        </summary>
+        <div class="help-content">
+          Each node has at most one left child and one right child. Clicking a
+          side's + follows that same-side branch to its deepest node and adds
+          the next child there. Every input starts at 10. The primary node is
+          labelled Owner; added nodes are named S1, S2, S3… in creation order
+          and show the name of the node whose + button was clicked (for example,
+          S1 (by Owner), S2 (by Owner), S3 (by S2)). Owner uses dark slate;
+          every node in the Owner's left organisation uses teal; every node in
+          the right organisation uses violet. Descendants keep their
+          organisation's colour regardless of which node adds them. Both +
+          buttons match their node's border colour. The left and right
+          organisations remain in separate zones divided by a vertical centre
+          line. Owner’s initial 10 points are excluded from side totals. Every 3
+          points on each side create 1 cheque worth $252 (3 × $42 × 2 sides);
+          unmatched points carry forward.
+        </div>
+      </details>
+      <div id="ownerDashboard" aria-live="polite">
+        <div class="dashboard-actions">
+          <div class="actions">
+            <button class="action" id="undoBtn" type="button" disabled>
+              ↶ Undo
+            </button>
+            <button class="action" id="redoBtn" type="button" disabled>
+              ↷ Redo
+            </button>
+            <button class="action" id="resetBtn" type="button">Reset</button>
+            <button class="action primary" id="exportBtn" type="button">
+              Export structure
+            </button>
+          </div>
+        </div>
+        <div id="dashboardSummary"></div>
+      </div>
+      <div class="canvas" id="canvas">
+        <div class="canvas-inner" id="canvasInner">
+          <svg id="connections" aria-hidden="true"></svg>
+          <div id="tree"></div>
+          <div class="empty-note" id="emptyNote">
+            Use either + button to add the first child
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="app-footer">
+      <div class="copyright">© Prashant Walavalkar</div>
+      <div class="made-with">
+        Made with <span class="heart" aria-label="love">♥</span> for Fellow IRs
+      </div>
+    </footer>
+    <script>
+      (() => {
+        const treeEl = document.getElementById("tree");
+        const inner = document.getElementById("canvasInner");
+        const svg = document.getElementById("connections");
+        const emptyNote = document.getElementById("emptyNote");
+        const dashboard = document.getElementById("dashboardSummary");
+        const OWNER_COLOR = "#334155";
+        const LEFT_COLOR = "#0f9f8f";
+        const RIGHT_COLOR = "#8b5cf6";
+        let nextId = 1;
+        let nextName = 1;
+        let defaultCommission = 0;
+        let minimalEarningsView = false;
+        let undoStack = [];
+        let redoStack = [];
+        const cloneState = () =>
+          JSON.parse(JSON.stringify({ root, nextId, nextName }));
+        const restoreState = (state) => {
+          root = JSON.parse(JSON.stringify(state.root));
+          nextId = state.nextId;
+          nextName = state.nextName;
+          render();
+          updateHistoryButtons();
+        };
+        const updateHistoryButtons = () => {
+          document.getElementById("undoBtn").disabled = undoStack.length === 0;
+          document.getElementById("redoBtn").disabled = redoStack.length === 0;
+        };
+        const POINT_VALUE = 42;
+        const POINTS_PER_SIDE_PER_CHEQUE = 3;
+        const CHEQUE_VALUE = POINT_VALUE * POINTS_PER_SIDE_PER_CHEQUE * 2;
+        const DR_COMMISION_VALUE = 700;
+        const makeNode = (
+          side = "root",
+          createdBy = "Owner",
+          isRoot = false
+        ) => {
+          const id = nextId++;
+          const name = isRoot ? "Owner" : "S" + nextName++;
+          return {
+            id,
+            name,
+            createdBy,
+            value: "10",
+            side,
+            color: isRoot
+              ? OWNER_COLOR
+              : side === "left"
+              ? LEFT_COLOR
+              : RIGHT_COLOR,
+            left: null,
+            right: null,
+            offsetX: 0,
+            offsetY: 0,
+          };
+        };
+        let root = makeNode("root", "", true);
+
+        function findNode(node, id) {
+          if (!node) return null;
+          if (node.id === id) return node;
+          return findNode(node.left, id) || findNode(node.right, id);
+        }
+        // Identify whether a node belongs to the Owner's left or right organisation.
+        function findRootSide(id) {
+          const contains = (node) =>
+            !!node &&
+            (node.id === id || contains(node.left) || contains(node.right));
+          return contains(root.left)
+            ? "left"
+            : contains(root.right)
+            ? "right"
+            : null;
+        }
+        // Clicking a side always extends that side's chain at its deepest point.
+        function addAlongBranch(startId, side) {
+          const initiator = findNode(root, startId);
+          if (!initiator) return;
+          undoStack.push(cloneState());
+          redoStack = [];
+          let cursor = initiator;
+          while (cursor[side]) cursor = cursor[side];
+          const child = makeNode(side, initiator.name);
+          // Every descendant inherits the colour of its Owner-level side, regardless of which node adds it.
+          const branchSide =
+            initiator === root ? side : findRootSide(initiator.id);
+          // Every node uses the colour of its Owner-level organisation side.
+          child.color = branchSide === "left" ? LEFT_COLOR : RIGHT_COLOR;
+          cursor[side] = child;
+          render();
+          updateHistoryButtons();
+          const input = treeEl.querySelector(
+            `[data-node-id="${child.id}"] .node-input`
+          );
+          if (input) {
+            input.focus();
+            input.select();
+          }
+        }
+        function sumPoints(node) {
+          if (!node) return 0;
+          return (
+            (Number(node.value) || 0) +
+            sumPoints(node.left) +
+            sumPoints(node.right)
+          );
+        }
+        function countOwnerAddedNodes(node) {
+          if (!node) return 0;
+          return (
+            (node.createdBy === "Owner" ? 1 : 0) +
+            countOwnerAddedNodes(node.left) +
+            countOwnerAddedNodes(node.right)
+          );
+        }
+        function countSystemNodes(node) {
+          if (!node) return 0;
+          return (
+            (node.name === "Owner" ? 0 : 1) +
+            countSystemNodes(node.left) +
+            countSystemNodes(node.right)
+          );
+        }
+        function sideStats(side) {
+          const added = sumPoints(root[side]);
+          const cheques = Math.floor(added / POINTS_PER_SIDE_PER_CHEQUE);
+          return {
+            added,
+            redeemed: cheques * POINTS_PER_SIDE_PER_CHEQUE,
+            carry: added - cheques * POINTS_PER_SIDE_PER_CHEQUE,
+            cheques,
+          };
+        }
+        function renderOwnerSummary() {
+          const left = sideStats("left"),
+            right = sideStats("right");
+          const matchedCheques = Math.min(left.cheques, right.cheques);
+          const redeemedLeft = matchedCheques * POINTS_PER_SIDE_PER_CHEQUE;
+          const redeemedRight = matchedCheques * POINTS_PER_SIDE_PER_CHEQUE;
+          const carryLeft = left.added - redeemedLeft,
+            carryRight = right.added - redeemedRight;
+          const box = document.createElement("div");
+          box.className = "owner-summary";
+          const makeSide = (label, stats, redeemed, carry, cls) => {
+            const el = document.createElement("div");
+            el.className = "side-stats " + cls;
+            el.innerHTML = `<strong>${label} side</strong><span>Total UV turnover: <b>${stats.added}</b></span><span>UV redeemed: <b>${redeemed}</b></span><span>Carry forward: <b>${carry}</b></span>`;
+            return el;
+          };
+          box.append(makeSide("LEFT", left, redeemedLeft, carryLeft, "left"));
+          const commissionCount = countOwnerAddedNodes(root);
+          const systemCount = countSystemNodes(root);
+          const chequeAmount = matchedCheques * CHEQUE_VALUE;
+          const drCommission = commissionCount * DR_COMMISION_VALUE;
+          const combinedTotal =
+            chequeAmount + drCommission + (Number(defaultCommission) || 0);
+          const center = document.createElement("div");
+          center.className = "owner-center";
+          center.innerHTML = `<div class="earning-breakdown"><div class="earning-note-row"><div class="earning-note">(1 cheque = $${CHEQUE_VALUE} )</div><button class="earning-view-toggle" type="button" aria-expanded="true">Show minimal</button></div><table class="earning-table"><tbody><tr class="toggle-earning-row"><td class="earning-amount"><span class="currency-symbol">$</span><input class="default-commission-input" type="number" min="0" step="any" value="${defaultCommission}" aria-label="Default commission amount"></td><td>Default Commission</td></tr><tr class="toggle-earning-row"><td class="earning-amount">$${chequeAmount.toLocaleString(
+            "en-US"
+          )}</td><td>${matchedCheques} cheques</td></tr><tr class="toggle-earning-row"><td class="earning-amount">$${drCommission.toLocaleString(
+            "en-US"
+          )}</td><td>(+) DR Commission (${commissionCount} DR${
+            commissionCount === 1 ? "" : "s"
+          })</td></tr><tr class="earning-total-row"><td class="earning-amount earning-total-amount">$${combinedTotal.toLocaleString(
+            "en-US"
+          )}</td><td>Total earnings</td></tr><tr class="earning-total-row system-count-row"><td class="earning-amount">${systemCount}</td><td>System count</td></tr></tbody></table></div>`;
+          const earningTable = center.querySelector(".earning-table");
+          const earningViewToggle = center.querySelector(
+            ".earning-view-toggle"
+          );
+          earningTable.classList.toggle("minimal-view", minimalEarningsView);
+          earningViewToggle.textContent = minimalEarningsView
+            ? "Show all"
+            : "Show minimal";
+          earningViewToggle.setAttribute(
+            "aria-expanded",
+            String(!minimalEarningsView)
+          );
+          earningViewToggle.addEventListener("click", () => {
+            minimalEarningsView = !minimalEarningsView;
+            earningTable.classList.toggle("minimal-view", minimalEarningsView);
+            earningViewToggle.textContent = minimalEarningsView
+              ? "Show all"
+              : "Show minimal";
+            earningViewToggle.setAttribute(
+              "aria-expanded",
+              String(!minimalEarningsView)
+            );
+          });
+          const defaultCommissionInput = center.querySelector(
+            ".default-commission-input"
+          );
+          defaultCommissionInput.addEventListener("input", (e) => {
+            defaultCommission =
+              e.target.value === ""
+                ? 0
+                : Math.max(0, Number(e.target.value) || 0);
+            const latestLeft = sideStats("left"),
+              latestRight = sideStats("right");
+            const latestCheques = Math.min(
+              latestLeft.cheques,
+              latestRight.cheques
+            );
+            const latestDR = countOwnerAddedNodes(root) * DR_COMMISION_VALUE;
+            const total =
+              latestCheques * CHEQUE_VALUE + latestDR + defaultCommission;
+            const totalCell = dashboard.querySelector(".earning-total-amount");
+            if (totalCell)
+              totalCell.textContent = "$" + total.toLocaleString("en-US");
+          });
+          box.append(
+            center,
+            makeSide("RIGHT", right, redeemedRight, carryRight, "right")
+          );
+          return box;
+        }
+        function renderNode(node, zone = "") {
+          const wrap = document.createElement("div");
+          wrap.className =
+            "tree-node" +
+            (zone ? " " + zone + "-zone" : "") +
+            (node === root ? " owner-root" : "");
+          wrap.dataset.nodeId = node.id;
+          wrap.style.setProperty("--node-color", node.color);
+          const label = document.createElement("button");
+          label.className = "node-label editable-label";
+          label.type = "button";
+          label.style.border = "0";
+          label.style.fontSize = "11px";
+          label.style.fontFamily = "inherit";
+          label.style.lineHeight = "normal";
+          label.style.background =
+            node.createdBy === "Owner"
+              ? "transparent"
+              : "rgba(255,255,255,.95)";
+          label.style.color = "inherit";
+          const updateLabelText = () => {
+            label.textContent = node.customName
+              ? node.name === "Owner"
+                ? `${node.customName} (Owner)`
+                : `${node.customName} (${node.name} By ${node.createdBy})`
+              : node.name === "Owner"
+              ? "Owner"
+              : `${node.name} (by ${node.createdBy})`;
+          };
+          updateLabelText();
+          {
+            label.title = "Click to add or edit a custom name";
+            const openLabelEditor = () => {
+              if (document.querySelector(".label-editor-overlay")) return;
+              const overlay = document.createElement("div");
+              overlay.className = "label-editor-overlay";
+              const previousOverflow = document.body.style.overflow;
+              document.body.style.overflow = "hidden";
+              const closeModal = () => {
+                overlay.remove();
+                document.body.style.overflow = previousOverflow;
+              };
+              overlay.setAttribute("role", "presentation");
+              const modal = document.createElement("form");
+              modal.className = "label-editor-modal";
+              modal.setAttribute("role", "dialog");
+              modal.setAttribute("aria-modal", "true");
+              modal.setAttribute("aria-labelledby", "label-editor-title");
+              modal.addEventListener("click", (e) => e.stopPropagation());
+              const saveCustomName = () => {
+                const customName = nameInput.value.trim();
+                if (!customName) {
+                  nameInput.focus();
+                  return;
+                }
+                node.customName = customName;
+                closeModal();
+                render();
+              };
+              modal.addEventListener("submit", (e) => {
+                e.preventDefault();
+                saveCustomName();
+              });
+              const heading = document.createElement("h3");
+              heading.id = "label-editor-title";
+              heading.textContent = "Add Name";
+              const help = document.createElement("p");
+              help.textContent = `Enter a name for ${node.name}. The original node and parent details will be kept.`;
+              const nameInput = document.createElement("input");
+              nameInput.type = "search";
+              nameInput.maxLength = 32;
+              nameInput.value = node.customName || "";
+              nameInput.placeholder = "Enter custom name";
+              nameInput.setAttribute("aria-label", "Custom name");
+              // Prevent Chrome from offering saved email/address suggestions in this custom-name popup.
+              nameInput.setAttribute("autocomplete", "off");
+              nameInput.setAttribute("autocapitalize", "off");
+              nameInput.setAttribute("autocorrect", "off");
+              nameInput.setAttribute("spellcheck", "false");
+              nameInput.setAttribute("name", "custom-node-label-search");
+              nameInput.setAttribute("data-lpignore", "true");
+              nameInput.setAttribute("data-1p-ignore", "true");
+              const actions = document.createElement("div");
+              actions.className = "label-editor-modal-actions";
+              const cancel = document.createElement("button");
+              cancel.type = "button";
+              cancel.className = "cancel-label-edit";
+              cancel.textContent = "Cancel";
+              cancel.addEventListener("click", closeModal);
+              const save = document.createElement("button");
+              save.type = "button";
+              save.className = "save-label-edit";
+              save.textContent = "Add";
+              save.addEventListener("click", saveCustomName);
+              actions.append(cancel, save);
+              modal.append(heading, help, nameInput, actions);
+              overlay.appendChild(modal);
+              overlay.addEventListener("click", (e) => {
+                if (e.target === overlay) closeModal();
+              });
+              const onEscape = (e) => {
+                if (e.key === "Escape" && document.body.contains(overlay)) {
+                  closeModal();
+                  document.removeEventListener("keydown", onEscape);
+                }
+              };
+              overlay.addEventListener(
+                "DOMNodeRemoved",
+                () => document.removeEventListener("keydown", onEscape),
+                { once: true }
+              );
+              document.addEventListener("keydown", onEscape);
+              document.body.appendChild(overlay);
+              nameInput.focus();
+              nameInput.select();
+            };
+            label.addEventListener("click", openLabelEditor);
+          }
+          const ownerHighlight =
+            node.createdBy === "Owner" ? document.createElement("div") : null;
+          if (ownerHighlight) {
+            ownerHighlight.className =
+              "owner-node-highlight " +
+              (zone === "left"
+                ? "owner-node-highlight-left"
+                : "owner-node-highlight-right");
+            ownerHighlight.appendChild(label);
+          } else {
+            wrap.appendChild(label);
+          }
+          const row = document.createElement("div");
+          row.className = "node-row";
+
+          const left = document.createElement("button");
+          left.className = "add-btn" + (node.left ? " has-branch" : "");
+          left.type = "button";
+          left.textContent = "+";
+          // Node input border and both + controls share the organisation-side colour.
+          left.style.setProperty("--button-color", node.color);
+          left.title = "Add at the end of this node’s left branch";
+          left.setAttribute(
+            "aria-label",
+            "Extend left branch from node " + node.value
+          );
+          left.addEventListener("click", () => addAlongBranch(node.id, "left"));
+
+          const input = document.createElement("input");
+          input.className = "node-input";
+          input.type = "text";
+          input.inputMode = "numeric";
+          input.maxLength = 2;
+          input.value = node.value;
+          input.placeholder = "10";
+          input.setAttribute(
+            "aria-label",
+            `${node.name} value, two digits maximum`
+          );
+          input.addEventListener("input", (e) => {
+            const digits = e.target.value.replace(/\D/g, "").slice(0, 2);
+            if (e.target.value !== digits) e.target.value = digits;
+            node.value = digits;
+            // Refresh the earnings and side totals immediately without re-rendering
+            // the tree, so the input remains focused while the user edits it.
+            dashboard.replaceChildren(renderOwnerSummary());
+          });
+
+          const right = document.createElement("button");
+          right.className = "add-btn" + (node.right ? " has-branch" : "");
+          right.type = "button";
+          right.textContent = "+";
+          right.style.setProperty("--button-color", node.color);
+          right.title = "Add at the end of this node’s right branch";
+          right.setAttribute(
+            "aria-label",
+            "Extend right branch from node " + node.value
+          );
+          right.addEventListener("click", () =>
+            addAlongBranch(node.id, "right")
+          );
+
+          row.append(left, input, right);
+          if (ownerHighlight) {
+            ownerHighlight.appendChild(row);
+            wrap.appendChild(ownerHighlight);
+          } else {
+            wrap.appendChild(row);
+          }
+          if (node.left || node.right) {
+            const children = document.createElement("div");
+            children.className =
+              "children" + (node === root ? " owner-children" : "");
+            const leftSlot = document.createElement("div");
+            leftSlot.className = "child-slot";
+            const rightSlot = document.createElement("div");
+            rightSlot.className = "child-slot";
+
+            if (node.left) {
+              leftSlot.appendChild(
+                renderNode(node.left, node === root ? "left" : zone)
+              );
+              if (node === root) makeDraggableSlot(leftSlot, node.left);
+            }
+            if (node.right) {
+              rightSlot.appendChild(
+                renderNode(node.right, node === root ? "right" : zone)
+              );
+              if (node === root) makeDraggableSlot(rightSlot, node.right);
+            }
+            children.append(leftSlot, rightSlot);
+            wrap.appendChild(children);
+          }
+          return wrap;
+        }
+        function makeDraggableSlot(slot, node) {
+          slot.classList.add("draggable");
+          slot.style.transform = `translate(${Number(node.offsetX) || 0}px,${
+            Number(node.offsetY) || 0
+          }px)`;
+          slot.title = "Drag to reposition this node and its branch";
+          let drag = null;
+          slot.addEventListener("pointerdown", (e) => {
+            if (
+              e.button !== 0 ||
+              e.target.closest("button,input,select,textarea")
+            )
+              return;
+            e.preventDefault();
+            e.stopPropagation();
+            const startX = e.clientX,
+              startY = e.clientY;
+            drag = {
+              startX,
+              startY,
+              baseX: Number(node.offsetX) || 0,
+              baseY: Number(node.offsetY) || 0,
+              moved: false,
+            };
+            slot.classList.add("dragging");
+            slot.setPointerCapture(e.pointerId);
+          });
+          slot.addEventListener("pointermove", (e) => {
+            if (!drag) return;
+            const dx = e.clientX - drag.startX,
+              dy = e.clientY - drag.startY;
+            if (Math.abs(dx) + Math.abs(dy) > 2) drag.moved = true;
+            node.offsetX = drag.baseX + dx;
+            node.offsetY = drag.baseY + dy;
+            slot.style.transform = `translate(${node.offsetX}px,${node.offsetY}px)`;
+            requestAnimationFrame(drawConnections);
+          });
+          const finish = (e) => {
+            if (!drag) return;
+            slot.classList.remove("dragging");
+            try {
+              if (slot.hasPointerCapture(e.pointerId))
+                slot.releasePointerCapture(e.pointerId);
+            } catch (_) {}
+            drag = null;
+            requestAnimationFrame(drawConnections);
+          };
+          slot.addEventListener("pointerup", finish);
+          slot.addEventListener("pointercancel", finish);
+        }
+        function undo() {
+          if (!undoStack.length) return;
+          redoStack.push(cloneState());
+          restoreState(undoStack.pop());
+        }
+        function redo() {
+          if (!redoStack.length) return;
+          undoStack.push(cloneState());
+          restoreState(redoStack.pop());
+        }
+        function render() {
+          dashboard.replaceChildren(renderOwnerSummary());
+          treeEl.replaceChildren(renderNode(root));
+          emptyNote.style.display = root.left || root.right ? "none" : "block";
+          requestAnimationFrame(drawConnections);
+        }
+        function drawConnections() {
+          const base = inner.getBoundingClientRect();
+          const elements = [
+            ...treeEl.querySelectorAll(".tree-node[data-node-id]"),
+          ];
+          const width = Math.max(inner.scrollWidth, inner.clientWidth);
+          const height = Math.max(
+            640,
+            treeEl.getBoundingClientRect().height + 150
+          );
+          svg.setAttribute("width", width);
+          svg.setAttribute("height", height);
+          svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+          svg.style.width = width + "px";
+          svg.style.height = height + "px";
+          svg.replaceChildren();
+          elements.forEach((el) => {
+            const node = findNode(root, Number(el.dataset.nodeId));
+            if (!node) return;
+            const p = el
+              .querySelector(
+                ":scope > .node-row .node-input, :scope > .owner-node-highlight .node-row .node-input"
+              )
+              .getBoundingClientRect();
+            const x1 = p.left + p.width / 2 - base.left,
+              y1 = p.bottom - base.top + 2;
+            ["left", "right"].forEach((side) => {
+              const child = node[side];
+              if (!child) return;
+              const childEl = treeEl.querySelector(
+                `.tree-node[data-node-id="${child.id}"]`
+              );
+              if (!childEl) return;
+              const childTarget =
+                node === root
+                  ? childEl.querySelector(":scope > .owner-node-highlight")
+                  : childEl.querySelector(
+                      ":scope > .node-label, :scope > .owner-node-highlight > .node-label"
+                    );
+              if (!childTarget) return;
+              const c = childTarget.getBoundingClientRect();
+              const x2 = c.left + c.width / 2 - base.left,
+                y2 = c.top - base.top,
+                mid = y1 + (y2 - y1) * 0.52;
+              const path = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "path"
+              );
+              path.setAttribute(
+                "d",
+                `M ${x1} ${y1} C ${x1} ${mid}, ${x2} ${mid}, ${x2} ${y2}`
+              );
+              path.setAttribute("fill", "none");
+              path.setAttribute("stroke", child.color);
+              path.setAttribute("stroke-width", "2");
+              path.setAttribute("stroke-linecap", "round");
+              svg.appendChild(path);
+
+              // Side marker centered on each connector: white circle with matching branch colour.
+              const markerY = (y1 + y2 + 6 * mid) / 8;
+              const markerX = (x1 + x2) / 2;
+              const marker = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "circle"
+              );
+              marker.setAttribute("cx", markerX);
+              marker.setAttribute("cy", markerY);
+              marker.setAttribute("r", "7");
+              marker.setAttribute("fill", "#ffffff");
+              marker.setAttribute("stroke", child.color);
+              marker.setAttribute("stroke-width", "2");
+              svg.appendChild(marker);
+
+              const markerText = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "text"
+              );
+              markerText.setAttribute("x", markerX);
+              markerText.setAttribute("y", markerY);
+              markerText.setAttribute("text-anchor", "middle");
+              markerText.setAttribute("dominant-baseline", "central");
+              markerText.setAttribute("fill", child.color);
+              markerText.setAttribute("font-family", "Roboto, sans-serif");
+              markerText.setAttribute("font-size", "8");
+              markerText.setAttribute("font-weight", "600");
+              markerText.textContent = side === "left" ? "L" : "R";
+              svg.appendChild(markerText);
+            });
+          });
+          // Central divider separates the Owner's left and right organisations.
+          const ownerInput = treeEl.querySelector(
+            ":scope > .tree-node > .node-row .node-input"
+          );
+          if (ownerInput) {
+            const r = ownerInput.getBoundingClientRect();
+            const x = r.left + r.width / 2 - base.left;
+            const y = r.bottom - base.top + 8;
+            const line = document.createElementNS(
+              "http://www.w3.org/2000/svg",
+              "line"
+            );
+            line.setAttribute("x1", x);
+            line.setAttribute("x2", x);
+            line.setAttribute("y1", y);
+            line.setAttribute("y2", height - 18);
+            line.setAttribute("stroke", "#cbd5e1");
+            line.setAttribute("stroke-width", "1.5");
+            line.setAttribute("stroke-dasharray", "5 6");
+            svg.appendChild(line);
+          }
+        }
+        function reset() {
+          nextId = 1;
+          nextName = 1;
+          defaultCommission = 0;
+          root = makeNode("root", "", true);
+          undoStack = [];
+          redoStack = [];
+          render();
+          updateHistoryButtons();
+        }
+        function collapse() {
+          root.left = null;
+          root.right = null;
+          undoStack = [];
+          redoStack = [];
+          render();
+          updateHistoryButtons();
+        }
+        document.getElementById("undoBtn").addEventListener("click", undo);
+        document.getElementById("redoBtn").addEventListener("click", redo);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        document.getElementById("exportBtn").addEventListener("click", () => {
+          const chequeCount = Math.min(
+            sideStats("left").cheques,
+            sideStats("right").cheques
+          );
+          const drCommissionNodeCount = countOwnerAddedNodes(root);
+          const drCommissionTotal = drCommissionNodeCount * DR_COMMISION_VALUE;
+          const chequeEarnings = chequeCount * CHEQUE_VALUE;
+          const exportData = {
+            pointValue: POINT_VALUE,
+            pointsPerSidePerCheque: POINTS_PER_SIDE_PER_CHEQUE,
+            chequeValue: CHEQUE_VALUE,
+            drCommissionPerNode: 700,
+            drCommissionNodeCount,
+            drCommissionTotal,
+            chequeEarnings,
+            combinedTotal: chequeEarnings + drCommissionTotal,
+            ownerInitialPointsExcluded: true,
+            left: sideStats("left"),
+            right: sideStats("right"),
+            cheques: chequeCount,
+            totalEarnings: chequeEarnings,
+            structure: root,
+          };
+          const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+            type: "application/json",
+          });
+          const url = URL.createObjectURL(blob),
+            a = document.createElement("a");
+          a.href = url;
+          a.download = "pyramid-structure.json";
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+        new ResizeObserver(() =>
+          requestAnimationFrame(drawConnections)
+        ).observe(inner);
+        window.addEventListener("resize", () =>
+          requestAnimationFrame(drawConnections)
+        );
+        render();
+        updateHistoryButtons();
+      })();
+    </script>
+  </body>
+</html>
