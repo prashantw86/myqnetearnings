@@ -904,7 +904,7 @@
             chequeAmount + drCommission + (Number(defaultCommission) || 0);
           const center = document.createElement("div");
           center.className = "owner-center";
-          center.innerHTML = `<div class="earning-breakdown"><div class="earning-note-row"><div class="earning-note">(1 cheque = $${CHEQUE_VALUE} )</div><button class="earning-view-toggle" type="button" aria-expanded="true">Show minimal</button></div><table class="earning-table"><tbody><tr class="toggle-earning-row"><td class="earning-amount"><span class="currency-symbol">$</span><input class="default-commission-input" type="number" min="0" step="any" value="${defaultCommission}" aria-label="Default commission amount"></td><td>Default Commission</td></tr><tr class="toggle-earning-row"><td class="earning-amount">$${chequeAmount.toLocaleString(
+          center.innerHTML = `<div class="earning-breakdown"><div class="earning-note-row"><div class="earning-note">(1 cheque = $${CHEQUE_VALUE} )</div><button class="earning-view-toggle" type="button" aria-expanded="true">Show minimal</button></div><table class="earning-table"><tbody><tr class="toggle-earning-row"><td class="earning-amount"><span class="currency-symbol">$</span><input class="default-commission-input" type="number" min="0" step="any" value="${defaultCommission}" aria-label="Own commission amount"></td><td>Own Commission</td></tr><tr class="toggle-earning-row"><td class="earning-amount">$${chequeAmount.toLocaleString(
             "en-US"
           )}</td><td>${matchedCheques} cheques</td></tr><tr class="toggle-earning-row"><td class="earning-amount">$${drCommission.toLocaleString(
             "en-US"
